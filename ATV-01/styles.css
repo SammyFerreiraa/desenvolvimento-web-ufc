@@ -1,0 +1,47 @@
+body,
+p,
+h1,
+h2,
+h3 {
+  font-family: Inter, sans-serif;
+  padding: 10px;
+}
+
+body {
+  background-color: #f9f9f9;
+}
+
+h1 {
+  font-size: 32px;
+  background-color: #e0f7fa;
+  padding: 20px;
+}
+
+h2 {
+  font-size: 26px;
+  background-color: #ffe0b2;
+  padding: 10px;
+}
+
+table {
+  margin: 20px auto;
+  border: 2px solid #000;
+  border-collapse: collapse;
+  background-color: #fff3e0;
+}
+
+th,
+td {
+  border: 1px solid #000;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+th {
+  background-color: #ffcc80;
+}
+
+img {
+  display: block;
+  margin: 10px auto;
+}
