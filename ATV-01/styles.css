@@ -13,13 +13,12 @@ body {
 
 h1 {
   font-size: 32px;
-  background-color: #e0f7fa;
   padding: 20px;
+  text-align: center;
 }
 
 h2 {
   font-size: 26px;
-  background-color: #ffe0b2;
   padding: 10px;
 }
 
