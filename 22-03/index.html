@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  style="box-sizing: border-box; margin: 0; padding: 0; height: 100%"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Layout</title>
+  </head>
+
+  <body
+    style="display: flex; flex-direction: column; height: 96vh; padding: 10px"
+  >
+    <header
+      style="
+        background-color: #333;
+        color: white;
+        padding: 1em;
+        text-align: center;
+      "
+    >
+      <h1>Cities</h1>
+    </header>
+    <main style="flex: 1; display: flex; flex-direction: row">
+      <section
+        class="section-1"
+        style="
+          flex: 1 1 25%;
+          background-color: #ccc;
+          padding: 1em;
+          display: flex;
+          flex-direction: column;
+          gap: 1em;
+        "
+      >
+        <ul style="list-style: none; padding: 0; margin: 0">
+          <li><a href="#" style="padding-bottom: 10px">London</a></li>
+          <li><a href="#" style="padding-bottom: 10px">Paris</a></li>
+          <li><a href="#" style="padding-bottom: 10px">Tokyo</a></li>
+        </ul>
+      </section>
+      <section
+        class="section-2"
+        style="flex: 1 1 75%; background-color: #999; padding: 1em"
+      >
+        <h2 style="padding-bottom: 10px; font-size: 32px">London</h2>
+        <p style="padding-bottom: 10px">
+          London is the capital city of England. It is the most populous city in
+          the United Kingdom, with a metropolitan area of over 13 million
+          inhabitants.
+        </p>
+        <p>
+          Standing on the River Thames, London has been a major settlement for
+          two millennia, its history going back to its founding by the Romans,
+          who named it Londinium.
+        </p>
+      </section>
+    </main>
+    <footer
+      style="
+        background-color: #333;
+        color: white;
+        padding: 1em;
+        text-align: center;
+      "
+    >
+      <p>Footer</p>
+    </footer>
+  </body>
+</html>
