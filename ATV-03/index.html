@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
+  <title>Meu Site de Viagens</title>
   <style>
     * {
       padding: 0;
@@ -14,6 +14,66 @@
 
     a:hover {
       opacity: 0.7;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .dark-mode-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      z-index: 20;
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #ddd;
+    }
+
+    .dark-mode ul {
+      background-color: #ddd !important;
+    }
+
+    .dark-mode nav a {
+      color: #000 !important;
+    }
+
+    .dark-mode nav a:hover {
+      opacity: 0.5;
+    }
+
+    .dark-mode header {
+      background-color: #0e7c68 !important;
+    }
+
+    .dark-mode nav {
+      background-color: #222 !important;
+    }
+
+    .dark-mode aside {
+      background-color: #1f1f1f !important;
+    }
+
+    .dark-mode footer {
+      background-color: #333 !important;
+    }
+
+    .dark-mode .dark-mode-toggle {
+      background-color: #333;
+    }
+
+    .dark-mode img {
+      opacity: 0.95;
     }
   </style>
 </head>
@@ -32,6 +92,7 @@
     <h1 style="font-size: 2em">My Travel Blog</h1>
     <p>Explore o mundo com um layout flexível.</p>
   </header>
+
   <nav style="background-color: #333; display: flex; width: 100%">
     <ul style="
           list-style: none;
@@ -74,6 +135,7 @@
       </li>
     </ul>
   </nav>
+
   <div style="display: flex; flex-direction: row; flex: 1">
     <aside style="flex: 1; background-color: #f1f1f1; padding: 20px">
       <div style="display: flex; flex-direction: column; gap: 15px">
@@ -104,6 +166,7 @@
         </div>
       </div>
     </aside>
+
     <section style="
           flex: 3;
           padding: 20px;
@@ -145,6 +208,7 @@
       </div>
     </section>
   </div>
+
   <footer style="
         background-color: #ddd;
         height: 20vh;
@@ -154,6 +218,14 @@
       ">
     <h2>© 2025 My Travel Blog — Todas as aventuras contadas de forma autêntica.</h2>
   </footer>
+
+  <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙 Modo Escuro</button>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+  </script>
 </body>
 
 </html>
