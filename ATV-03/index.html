@@ -13,8 +13,7 @@
     }
 
     a:hover {
-      background-color: #ddd;
-      color: #333;
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -30,8 +29,8 @@
         text-align: center;
         flex-direction: column;
       ">
-    <h1 style="font-size: 2em">My Website</h1>
-    <p>xxx xxxxx xxxx</p>
+    <h1 style="font-size: 2em">My Travel Blog</h1>
+    <p>Explore o mundo com um layout flexível.</p>
   </header>
   <nav style="background-color: #333; display: flex; width: 100%">
     <ul style="
@@ -47,7 +46,7 @@
               text-decoration: none;
               padding: 6px;
               margin-top: 4px;
-            ">Line 1</a>
+            ">Destinos</a>
       </li>
       <li>
         <a href="#" style="
@@ -55,7 +54,7 @@
               text-decoration: none;
               padding: 6px;
               margin-top: 4px;
-            ">Line 2</a>
+            ">Dicas de viagem</a>
       </li>
       <li>
         <a href="#" style="
@@ -63,7 +62,7 @@
               text-decoration: none;
               padding: 6px;
               margin-top: 4px;
-            ">Line 3</a>
+            ">Sobre Mim</a>
       </li>
       <li>
         <a href="#" style="
@@ -71,7 +70,7 @@
               text-decoration: none;
               padding: 6px;
               margin-top: 4px;
-            ">Line 4</a>
+            ">Contato</a>
       </li>
     </ul>
   </nav>
@@ -79,23 +78,29 @@
     <aside style="flex: 1; background-color: #f1f1f1; padding: 20px">
       <div style="display: flex; flex-direction: column; gap: 15px">
         <h2>About me</h2>
-        <p>xxx xxxx xxx</p>
-        <img src="https://cdn.melhoreshospedagem.com/wp/wp-content/uploads/2024/12/web-800x450.jpg" alt="Italian Trulli"
-          style="width: 100%; height: auto; object-fit: cover" />
-        <p>xxx xxx xxxx xxx</p>
+        <p>Photo of me:</p>
+        <img src="https://p2.trrsf.com/image/fget/cf/774/0/images.terra.com/2022/03/20/842389795-62378471c5998.jpeg"
+          alt="Italian Trulli" style="width: 100%; height: 25vh; object-fit: cover" />
+        <p>Sou um apaixonado por viagens e fotografia. Já percorri mais de 15 países documentando culturas, sabores e
+          histórias pelo mundo. Aqui compartilho minhas experiências e roteiros favoritos.</p>
       </div>
-      <div>
-        <h3>xxx xxx</h3>
-        <p>aaaaaa aaaa aa</p>
+      <div style="
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-top: 20px;">
+        <h3>More Text</h3>
+        <p>Acredito que viajar transforma o olhar e a forma como enxergamos a vida. Meu objetivo é inspirar outras
+          pessoas a saírem da rotina e explorarem o desconhecido.</p>
         <div style="
               display: flex;
               gap: 10px;
               flex-wrap: wrap;
               flex-direction: column;
             ">
-          <div style="padding: 15px; background-color: #aaa">image</div>
-          <div style="padding: 15px; background-color: #aaa">image</div>
-          <div style="padding: 15px; background-color: #aaa">image</div>
+          <img src="https://picsum.photos/200/300" alt="image" style="width: 100%; height: 5vh; object-fit: cover" />
+          <img src="https://picsum.photos/200/301" alt="image" style="width: 100%; height: 5vh; object-fit: cover" />
+          <img src="https://picsum.photos/200/302" alt="image" style="width: 100%; height: 5vh; object-fit: cover" />
         </div>
       </div>
     </aside>
@@ -107,41 +112,35 @@
           flex-direction: column;
         ">
       <div style="display: flex; gap: 15px; flex-direction: column">
-        <h2>TITLE HEADING</h2>
-        <p>Dec, 7, 2024</p>
-        <div style="
-              background-color: #ddd;
+        <h2>Expedição no Deserto do Atacama</h2>
+        <p>Viagem inesquecível, Jan 20, 2025</p>
+        <img
+          src="https://i1.wp.com/pisa.tur.br/blog/wp-content/uploads/2018/10/atacama_capablog-2.jpg?fit=1920%2C840&ssl=1"
+          alt="Image" style="
               height: 20vh;
               width: 100%;
-              padding: 20px;
-            ">
-          Image
-        </div>
-        <p>xxx xxx</p>
+              object-fit: cover;
+            " />
+        <p>Atacama</p>
         <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Excepturi
-          nemo, corporis sequi repudiandae quas dolorum! Provident, voluptates
-          quos eaque autem nulla, odit iste assumenda voluptatem ullam
-          recusandae, eligendi voluptatibus. Quis!
+          Uma das paisagens mais surreais que já presenciei. As noites estreladas do deserto são de tirar o fôlego e as
+          lagunas altiplânicas têm tons inacreditáveis.
         </p>
       </div>
       <div style="display: flex; gap: 15px; flex-direction: column">
-        <h2>TITLE HEADING</h2>
-        <p>Dec, 7, 2024</p>
-        <div style="
-              background-color: #ddd;
+        <h2>Roteiro Gastronômico na Itália</h2>
+        <p>Sabores da Toscana, Dec 5, 2024</p>
+        <img
+          src="https://midias-turismo.eurodicas.com.br/wp-content/uploads/2025/03/quanto-custa-viajar-para-italia-1-750x420.jpg.webp"
+          alt="Image" style="
               height: 20vh;
               width: 100%;
-              padding: 20px;
-            ">
-          Image
-        </div>
-        <p>xxx xxx</p>
+              object-fit: cover;
+            " />
+        <p>Toscana</p>
         <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Excepturi
-          nemo, corporis sequi repudiandae quas dolorum! Provident, voluptates
-          quos eaque autem nulla, odit iste assumenda voluptatem ullam
-          recusandae, eligendi voluptatibus. Quis!
+          Sete dias explorando as vinícolas e trattorias da Toscana. Cada refeição foi uma experiência única, recheada
+          de massas frescas, queijos e vinhos premiados.
         </p>
       </div>
     </section>
@@ -153,7 +152,7 @@
         align-items: center;
         justify-content: center;
       ">
-    <h2>Footer</h2>
+    <h2>© 2025 My Travel Blog — Todas as aventuras contadas de forma autêntica.</h2>
   </footer>
 </body>
 
