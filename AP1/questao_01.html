@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Questão 01</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    a:hover {
+      opacity: 0.7;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+@media (max-width: 400px) {
+  .container {
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+
+<body style="display: flex; flex-direction: column; height: 100vh">
+  <header style="
+        background-color: #f00707;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 30vh;
+        color: white;
+        text-align: center;
+        flex-direction: column;
+      ">
+    <h1 style="font-size: 2em">Desenvolvimento de software WEB</h1>
+  </header>
+
+  <div style="display: flex; flex: 1" class="container">
+    <aside style="flex: 1; background-color: #02f8cb; padding: 20px">
+      <nav>
+        <ul style="list-style: none;">
+          <li><a href="#">link 1</a></li>
+          <li><a href="#">link 2</a></li>
+          <li><a href="#">link 3</a></li>
+          <li><a href="#">link 4</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <section style="
+          flex: 2.3;
+          padding: 20px;
+          display: flex;
+          gap: 15px;
+          flex-direction: column;
+        ">
+      <div style="display: flex; gap: 15px; flex-direction: column">
+        <h2>Introdução ao HTML</h2>
+        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse architecto tempora explicabo sed dolorum quae
+          odio voluptatibus. Nisi dolorem eum amet. Pariatur eum consequatur totam magnam. A placeat corporis excepturi!
+        </p>
+        <div alt="Image" style="
+              height: 20vh;
+              background-color: #000;
+              width: 100%;
+            "></div>
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nostrum placeat, perspiciatis obcaecati porro
+          assumenda sequi. Culpa placeat blanditiis aperiam eius adipisci doloremque minus delectus, sint consequuntur!
+          Nihil perferendis excepturi libero.
+        </p>
+      </div>
+      <div style="display: flex; gap: 15px; flex-direction: column">
+        <div alt="Image" style="
+              height: 20vh;
+              width: 100%;
+              background-color: #000;
+            " />
+      </div>
+    </section>
+  </div>
+
+  <footer style="
+        background-color: #5004f5;
+        height: 20vh;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      ">
+    <p>sammy.ferreira@alu.ufc.br</p>
+    <p>2025.1</p>
+    <p>Todos os direitos reservados</p>
+  </footer>
+</body>
+
+</html>
