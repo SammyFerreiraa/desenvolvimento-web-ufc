@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Alunos - Média da Turma</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .media-display {
+            text-align: center;
+            padding: 20px;
+            background-color: #d4edda;
+            border-radius: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Gerenciamento de Alunos</h2>
+
+        <div class="form-section">
+            <h3 id="formTitle">Adicionar Novo Aluno</h2>
+            <form id="alunoForm">
+                <input type="hidden" id="alunoId" value="">
+                
+                <div class="form-group">
+                    <label for="nome">Nome:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="curso">Curso:</label>
+                    <input type="text" id="curso" name="curso" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ira">IRA:</label>
+                    <input type="number" id="ira" name="ira" min="0" max="10" step="0.1" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitBtn">Adicionar Aluno</button>
+                <button type="button" class="btn btn-warning hidden" id="cancelBtn" onclick="cancelarEdicao()">Cancelar</button>
+            </form>
+        </div>
+
+        <table id="tabelaAlunos">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Curso</th>
+                    <th>IRA</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+            </tbody>
+        </table>
+
+        <div class="media-display" id="mediaTurma">
+        </div>
+    </div>
+
+    <script>
+        let alunos = [];
+        let editandoId = null;
+
+        async function buscarAlunos() {
+            try {
+                const response = await fetch("http://localhost:3000/alunos");
+                const data = await response.json();
+                
+                if (data.success) {
+                    alunos = data.data;
+                    carregarTabela();
+                    calcularEstatisticas();
+                } else {
+                    console.error('Erro ao buscar alunos:', data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar alunos:', error);
+                alert('Erro ao conectar com o servidor. Verifique se o backend está rodando.');
+            }
+        }
+
+        function carregarTabela() {
+            const corpoTabela = document.getElementById('corpoTabela');
+            corpoTabela.innerHTML = '';
+
+            alunos.forEach(aluno => {
+                const linha = document.createElement('tr');
+
+                linha.innerHTML = `
+                    <td>${aluno.nome}</td>
+                    <td>${aluno.curso}</td>
+                    <td>${aluno.ira.toFixed(1)}</td>
+                    <td class="actions">
+                        <button class="btn btn-warning" onclick="editarAluno(${aluno.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="confirmarExclusao(${aluno.id})">Excluir</button>
+                    </td>
+                `;
+
+                corpoTabela.appendChild(linha);
+            });
+        }
+
+        function calcularEstatisticas() {
+            if (alunos.length === 0) {
+                document.getElementById('mediaTurma').textContent = 'Nenhum aluno cadastrado';
+                return;
+            }
+
+            const somaNotas = alunos.reduce((soma, aluno) => soma + aluno.ira, 0);
+            const mediaTurma = somaNotas / alunos.length;
+
+            document.getElementById('mediaTurma').textContent = `Média da Turma: ${mediaTurma.toFixed(2)}`;
+        }
+
+        async function salvarAluno(dadosAluno) {
+            try {
+                const url = editandoId ? 
+                    `http://localhost:3000/alunos/${editandoId}` : 
+                    'http://localhost:3000/alunos';
+                
+                const method = editandoId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosAluno)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(editandoId ? 'Aluno atualizado com sucesso!' : 'Aluno adicionado com sucesso!');
+                    await buscarAlunos();
+                    limparFormulario();
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao salvar aluno:', error);
+                alert('Erro ao salvar aluno');
+            }
+        }
+
+        async function excluirAluno(id) {
+            try {
+                const response = await fetch(`http://localhost:3000/alunos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Aluno excluído com sucesso!');
+                    await buscarAlunos();
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao excluir aluno:', error);
+                alert('Erro ao excluir aluno');
+            }
+        }
+
+        function editarAluno(id) {
+            const aluno = alunos.find(a => a.id === id);
+            if (!aluno) return;
+
+            document.getElementById('alunoId').value = aluno.id;
+            document.getElementById('nome').value = aluno.nome;
+            document.getElementById('curso').value = aluno.curso;
+            document.getElementById('ira').value = aluno.ira;
+
+            document.getElementById('formTitle').textContent = 'Editar Aluno';
+            document.getElementById('submitBtn').textContent = 'Atualizar Aluno';
+            document.getElementById('cancelBtn').classList.remove('hidden');
+
+            editandoId = id;
+        }
+
+        function confirmarExclusao(id) {
+            const aluno = alunos.find(a => a.id === id);
+            if (!aluno) return;
+
+            if (confirm(`Tem certeza que deseja excluir o aluno "${aluno.nome}"?`)) {
+                excluirAluno(id);
+            }
+        }
+
+        function cancelarEdicao() {
+            limparFormulario();
+        }
+
+        function limparFormulario() {
+            document.getElementById('alunoForm').reset();
+            document.getElementById('alunoId').value = '';
+            document.getElementById('formTitle').textContent = 'Adicionar Novo Aluno';
+            document.getElementById('submitBtn').textContent = 'Adicionar Aluno';
+            document.getElementById('cancelBtn').classList.add('hidden');
+            editandoId = null;
+        }
+
+        document.getElementById('alunoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const dadosAluno = {
+                nome: document.getElementById('nome').value.trim(),
+                curso: document.getElementById('curso').value.trim(),
+                ira: parseFloat(document.getElementById('ira').value)
+            };
+
+            if (!dadosAluno.nome || !dadosAluno.curso || isNaN(dadosAluno.ira)) {
+                alert('Por favor, preencha todos os campos corretamente.');
+                return;
+            }
+
+            if (dadosAluno.ira < 0 || dadosAluno.ira > 10) {
+                alert('O IRA deve estar entre 0 e 10.');
+                return;
+            }
+
+            salvarAluno(dadosAluno);
+        });
+
+        window.onload = function() {
+            buscarAlunos();
+        };
+    </script>
+</body>
+
+</html>
