@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COVID-19 - Países do Mundo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin: 0 0 5px 0;
+    }
+
+    .header p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 16px;
+      color: #666;
+    }        .stats-container {
+            padding: 20px;
+        }
+
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      background: #ecf0f1;
+      color: #2c3e50;
+      font-weight: bold;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #bdc3c7;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .highlight-brazil {
+      background: #e74c3c !important;
+      color: white !important;
+    }
+
+    .highlight-brazil:hover {
+      background: #c0392b !important;
+    }
+
+    .number {
+      text-align: right;
+      font-weight: normal;
+    }
+
+    .country-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .highlight-brazil .country-name {
+      color: white;
+    }        .brazil-flag {
+            margin-right: 5px;
+        }
+
+        .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      margin: 20px;
+      border-radius: 3px;
+      border: 1px solid #f5c6cb;
+    }        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+            }
+        }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>COVID-19 - Países do Mundo</h1>
+    </div>
+
+    <div id="loading" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div id="content" class="stats-container" style="display: none;">
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>País</th>
+              <th>Casos</th>
+              <th>Confirmados</th>
+              <th>Falecimentos</th>
+              <th>Recuperados</th>
+            </tr>
+          </thead>
+          <tbody id="countriesTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="error" style="display: none;" class="error">
+      <h3>Erro ao carregar dados</h3>
+      <p id="errorMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://covid19-brazil-api.vercel.app/api';
+    let allCountries = [];
+
+    async function fetchCountriesData() {
+      try {
+        const response = await fetch(`${API_BASE}/report/v1/countries`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Estrutura da resposta da API:', data);
+
+        if (Array.isArray(data)) {
+          return data;
+        } else if (data.data && Array.isArray(data.data)) {
+          return data.data;
+        } else {
+          throw new Error('Estrutura de dados inesperada da API');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        throw error;
+      }
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('pt-BR').format(num);
+    }
+
+    function displayCountries(countries) {
+      const tableBody = document.getElementById('countriesTable');
+      tableBody.innerHTML = '';
+
+      countries.forEach(country => {
+        const row = document.createElement('tr');
+        const isBrazil = country.country && country.country.toLowerCase().includes('brazil');
+
+        if (isBrazil) {
+          row.classList.add('highlight-brazil');
+        }
+
+        row.innerHTML = `
+                    <td class="country-name">
+                        ${isBrazil ? '<span class="brazil-flag"></span>' : ''}
+                        ${country.country || 'N/A'}
+                    </td>
+                    <td class="number">${formatNumber(country.cases || 0)}</td>
+                    <td class="number">${formatNumber(country.confirmed || 0)}</td>
+                    <td class="number">${formatNumber(country.deaths || 0)}</td>
+                    <td class="number">${formatNumber(country.recovered || 0)}</td>
+                `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    async function init() {
+      try {
+        const countries = await fetchCountriesData();
+
+        if (!Array.isArray(countries)) {
+          throw new Error('Dados dos países não estão no formato esperado (array)');
+        }
+
+        if (countries.length === 0) {
+          throw new Error('Nenhum dado de país foi retornado pela API');
+        }
+
+        console.log(`${countries.length} países carregados`);
+
+        allCountries = countries.sort((a, b) => (b.cases || 0) - (a.cases || 0));
+
+        displayCountries(allCountries);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+      } catch (error) {
+        console.error('Erro detalhado:', error);
+        showError(`Erro ao carregar dados: ${error.message}`);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+
+</html>

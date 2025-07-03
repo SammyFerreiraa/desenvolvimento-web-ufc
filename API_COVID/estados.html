@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COVID-19 - Estados Brasileiros</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin: 0 0 5px 0;
+    }
+
+    .header p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 16px;
+      color: #666;
+    }
+
+    .stats-container {
+      padding: 20px;
+    }
+
+    .summary-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: #3498db;
+      color: white;
+      padding: 15px;
+      border-radius: 3px;
+      text-align: center;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .summary-card h3 {
+      font-size: 12px;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+    }
+
+    .summary-card .value {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 30px;
+    }        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }        th {
+            background: #ecf0f1;
+            color: #2c3e50;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #bdc3c7;
+        }        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .highlight-deaths {
+      background-color: #ffebee !important;
+      border-left: 4px solid #f44336;
+    }
+
+    .highlight-deaths:hover {
+      background-color: #ffcdd2 !important;
+    }
+
+    .ratio-highlight {
+      background: #27ae60;
+      padding: 15px;
+      border-radius: 3px;
+      color: white;
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    .ratio-highlight h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }        .number {
+            text-align: right;
+            font-weight: normal;
+        }
+
+        .state-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }        .abbreviation {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 3px;
+            border: 1px solid #f5c6cb;
+        }@media (max-width: 768px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .summary-cards {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 6px 4px;
+            }
+        }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>COVID-19 - Estados Brasileiros</h1>
+    </div>
+
+    <div id="loading" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div id="content" class="stats-container" style="display: none;">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <h3>Média de Casos</h3>
+          <div class="value" id="avgCases">-</div>
+        </div>
+        <div class="summary-card">
+          <h3>Média de Suspeitos</h3>
+          <div class="value" id="avgSuspects">-</div>
+        </div>
+        <div class="summary-card">
+          <h3>Média de Falecimentos</h3>
+          <div class="value" id="avgDeaths">-</div>
+        </div>
+      </div>
+
+      <div class="ratio-highlight">
+        <h3>Maior Relação Casos/Falecimentos</h3>
+        <p id="maxRatio">-</p>
+      </div>
+
+      <div class="ratio-highlight">
+        <h3>Menor Relação Casos/Falecimentos</h3>
+        <p id="minRatio">-</p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th>UF</th>
+              <th>Casos</th>
+              <th>Suspeitos</th>
+              <th>Falecimentos</th>
+            </tr>
+          </thead>
+          <tbody id="statesTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="error" style="display: none;" class="error">
+      <h3>Erro ao carregar dados</h3>
+      <p id="errorMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://covid19-brazil-api.vercel.app/api';
+
+    async function fetchStatesData() {
+      try {
+        const response = await fetch(`${API_BASE}/report/v1`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.data;
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        throw error;
+      }
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('pt-BR').format(num);
+    }
+
+    function calculateAverage(arr) {
+      const sum = arr.reduce((a, b) => a + b, 0);
+      return Math.round(sum / arr.length);
+    }
+
+    function calculateRatio(cases, deaths) {
+      return deaths > 0 ? (cases / deaths).toFixed(2) : 'N/A';
+    }
+
+    function displayData(states) {
+      const cases = states.map(state => state.cases);
+      const suspects = states.map(state => state.suspects);
+      const deaths = states.map(state => state.deaths);
+
+      const avgCases = calculateAverage(cases);
+      const avgSuspects = calculateAverage(suspects);
+      const avgDeaths = calculateAverage(deaths);
+
+      document.getElementById('avgCases').textContent = formatNumber(avgCases);
+      document.getElementById('avgSuspects').textContent = formatNumber(avgSuspects);
+      document.getElementById('avgDeaths').textContent = formatNumber(avgDeaths);
+
+      const ratios = states.map(state => ({
+        state: state.state,
+        ratio: state.deaths > 0 ? state.cases / state.deaths : Infinity,
+        ratioText: calculateRatio(state.cases, state.deaths)
+      }));
+
+      const validRatios = ratios.filter(r => r.ratio !== Infinity && !isNaN(r.ratio));
+
+      let maxRatioState = null;
+      let minRatioState = null;
+
+      if (validRatios.length > 0) {
+        maxRatioState = validRatios.reduce((max, current) =>
+          current.ratio > max.ratio ? current : max
+        );
+        minRatioState = validRatios.reduce((min, current) =>
+          current.ratio < min.ratio ? current : min
+        );
+      }
+
+      document.getElementById('maxRatio').textContent = maxRatioState
+        ? `${maxRatioState.state}: ${maxRatioState.ratioText}`
+        : 'N/A';
+
+      document.getElementById('minRatio').textContent = minRatioState
+        ? `${minRatioState.state}: ${minRatioState.ratioText}`
+        : 'N/A';
+
+      const tableBody = document.getElementById('statesTable');
+      tableBody.innerHTML = '';
+
+      states.forEach(state => {
+        const row = document.createElement('tr');
+        const isAboveAvgDeaths = state.deaths > avgDeaths;
+
+        if (isAboveAvgDeaths) {
+          row.classList.add('highlight-deaths');
+        }
+
+        const ratio = calculateRatio(state.cases, state.deaths);
+
+        row.innerHTML = `
+                    <td class="state-name">${state.state}</td>
+                    <td><span class="abbreviation">${state.uf}</span></td>
+                    <td class="number">${formatNumber(state.cases)}</td>
+                    <td class="number">${formatNumber(state.suspects)}</td>
+                    <td class="number">${formatNumber(state.deaths)}</td>
+                `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    async function init() {
+      try {
+        const states = await fetchStatesData();
+
+        states.sort((a, b) => a.state.localeCompare(b.state));
+
+        displayData(states);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+      } catch (error) {
+        showError(`Erro ao carregar dados: ${error.message}`);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+
+</html>
