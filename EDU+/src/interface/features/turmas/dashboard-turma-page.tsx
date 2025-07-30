@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiClient } from "@/config/trpc/react";
 import { Badge } from "@/interface/components/ui/badge";
 import { Button } from "@/interface/components/ui/button";
 import { Card, CardContent } from "@/interface/components/ui/card";
@@ -17,6 +17,9 @@ import {
    ListasExercicios,
    TurmaStats
 } from "@/interface/features/turmas/components/turma-dashboard";
+import { listasApi, type ListaExercicio } from "@/services/listas-api";
+import { questoesApi } from "@/services/questoes-api";
+import { turmasApi } from "@/services/turmas-api";
 
 export function DashboardTurmaPage() {
    const router = useRouter();
@@ -55,118 +58,133 @@ export function DashboardTurmaPage() {
       }>;
    } | null>(null);
 
-   const utils = apiClient.useUtils();
+   // Estados para dados da API
+   const [turma, setTurma] = useState<any>(null);
+   const [listasExercicios, setListasExercicios] = useState<ListaExercicio[]>([]);
+   const [questoesDisponiveis, setQuestoesDisponiveis] = useState<any[]>([]);
+   const [carregandoTurma, setCarregandoTurma] = useState(false);
+   const [carregandoListas, setCarregandoListas] = useState(false);
+   const [carregandoQuestoes, setCarregandoQuestoes] = useState(false);
 
-   const { data: turma, isLoading } = apiClient.turmas.byId.useQuery({ id: turmaId! }, { enabled: !!turmaId });
+   // Estados para mutations
+   const [cadastrandoAluno, setCadastrandoAluno] = useState(false);
+   const [removendoAluno, setRemovendoAluno] = useState(false);
+   const [editandoAlunoLoading, setEditandoAlunoLoading] = useState(false);
+   const [criandoLista, setCriandoLista] = useState(false);
+   const [editandoListaLoading, setEditandoListaLoading] = useState(false);
+   const [deletandoLista, setDeletandoLista] = useState(false);
 
-   const { data: listasExercicios } = apiClient.listaExercicios.findByTurma.useQuery(
-      { turmaId: turmaId! },
-      { enabled: !!turmaId }
-   );
+   // Buscar dados da turma
+   const buscarTurma = async () => {
+      if (!turmaId) return;
 
-   const { data: questoesDisponiveis } = apiClient.questoes.list.useQuery(
-      { serie: turma?.serie },
-      { enabled: !!turma?.serie }
-   );
+      setCarregandoTurma(true);
+      try {
+         const data = await turmasApi.getById(turmaId);
+         setTurma(data);
+      } catch (error: any) {
+         toast.error(`Erro ao carregar turma: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setCarregandoTurma(false);
+      }
+   };
 
-   const cadastrarMutation = apiClient.turmas.cadastrarAluno.useMutation({
-      onSuccess: (dados) => {
+   // Buscar listas de exercícios
+   const buscarListas = async () => {
+      if (!turmaId) return;
+
+      setCarregandoListas(true);
+      try {
+         const data = await listasApi.findByTurma(turmaId);
+         setListasExercicios(data || []);
+      } catch (error: any) {
+         toast.error(`Erro ao carregar listas: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setCarregandoListas(false);
+      }
+   };
+
+   // Buscar questões disponíveis
+   const buscarQuestoes = async (serie?: string) => {
+      if (!serie) return;
+
+      setCarregandoQuestoes(true);
+      try {
+         const data = await questoesApi.list({ serie: serie as any });
+         setQuestoesDisponiveis(data.questoes || []);
+      } catch (error: any) {
+         toast.error(`Erro ao carregar questões: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setCarregandoQuestoes(false);
+      }
+   };
+
+   // Effects
+   useEffect(() => {
+      buscarTurma();
+   }, [turmaId]);
+
+   useEffect(() => {
+      buscarListas();
+   }, [turmaId]);
+
+   useEffect(() => {
+      if (turma?.serie) {
+         buscarQuestoes(turma.serie);
+      }
+   }, [turma?.serie]);
+
+   // Handlers para as ações
+
+   const handleCadastrarAluno = async () => {
+      if (!turmaId || !nomeAluno.trim() || !responsavel.trim()) {
+         toast.error("Por favor, preencha nome do aluno e responsável");
+         return;
+      }
+
+      setCadastrandoAluno(true);
+      try {
+         const dados = await turmasApi.cadastrarAluno({
+            nome: nomeAluno.trim(),
+            responsavel: responsavel.trim(),
+            dataNascimento: dataNascimento || undefined,
+            turmaId: turmaId
+         });
+
          alert(
             `Aluno cadastrado com sucesso!\n\nCódigo de acesso: ${dados.codigoAcesso}\n\nAnote este código, pois o aluno precisará dele para acessar a plataforma.`
          );
+
          setNomeAluno("");
          setResponsavel("");
          setDataNascimento("");
          setMostrarFormulario(false);
-         void utils.turmas.byId.invalidate({ id: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao cadastrar aluno: ${error.message}`);
+         await buscarTurma(); // Recarregar dados da turma
+      } catch (error: any) {
+         toast.error(`Erro ao cadastrar aluno: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setCadastrandoAluno(false);
       }
-   });
-
-   const removerMutation = apiClient.turmas.removeAluno.useMutation({
-      onSuccess: () => {
-         alert("Aluno removido da turma com sucesso!");
-         void utils.turmas.byId.invalidate({ id: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao remover aluno: ${error.message}`);
-      }
-   });
-
-   const editarMutation = apiClient.turmas.editarAluno.useMutation({
-      onSuccess: () => {
-         alert("Dados do aluno atualizados com sucesso!");
-         setEditandoAluno(null);
-         void utils.turmas.byId.invalidate({ id: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao editar aluno: ${error.message}`);
-      }
-   });
-
-   const criarListaMutation = apiClient.listaExercicios.create.useMutation({
-      onSuccess: () => {
-         alert("Lista de exercícios criada com sucesso!");
-         setMostrarCriarLista(false);
-         setDadosLista({ titulo: "", descricao: "", dataLiberacao: "", dataLimite: "" });
-         setQuestoesSelecionadas([]);
-         void utils.turmas.byId.invalidate({ id: turmaId! });
-         void utils.listaExercicios.findByTurma.invalidate({ turmaId: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao criar lista: ${error.message}`);
-      }
-   });
-
-   const editarListaMutation = apiClient.listaExercicios.update.useMutation({
-      onSuccess: () => {
-         alert("Lista de exercícios atualizada com sucesso!");
-         setEditandoLista(null);
-         void utils.listaExercicios.findByTurma.invalidate({ turmaId: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao editar lista: ${error.message}`);
-      }
-   });
-
-   const deletarListaMutation = apiClient.listaExercicios.delete.useMutation({
-      onSuccess: () => {
-         alert("Lista de exercícios removida com sucesso!");
-         void utils.listaExercicios.findByTurma.invalidate({ turmaId: turmaId! });
-      },
-      onError: (error) => {
-         alert(`Erro ao deletar lista: ${error.message}`);
-      }
-   });
-
-   const handleCadastrarAluno = () => {
-      if (!turmaId || !nomeAluno.trim() || !responsavel.trim()) {
-         alert("Por favor, preencha nome do aluno e responsável");
-         return;
-      }
-
-      cadastrarMutation.mutate({
-         nome: nomeAluno.trim(),
-         responsavel: responsavel.trim(),
-         dataNascimento: dataNascimento || undefined,
-         turmaId: turmaId
-      });
    };
 
-   const handleRemoverAluno = (alunoId: string, nomeAluno: string) => {
+   const handleRemoverAluno = async (alunoId: string, nomeAluno: string) => {
       if (!turmaId) return;
 
       const confirmacao = confirm(
          `Tem certeza que deseja remover o aluno "${nomeAluno}" desta turma?\n\nEsta ação não pode ser desfeita.`
       );
 
-      if (confirmacao) {
-         removerMutation.mutate({
-            turmaId: turmaId,
-            alunoId: alunoId
-         });
+      if (!confirmacao) return;
+
+      setRemovendoAluno(true);
+      try {
+         await turmasApi.removeAlunos(turmaId, [alunoId]);
+         toast.success("Aluno removido da turma com sucesso!");
+         await buscarTurma(); // Recarregar dados da turma
+      } catch (error: any) {
+         toast.error(`Erro ao remover aluno: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setRemovendoAluno(false);
       }
    };
 
@@ -185,41 +203,103 @@ export function DashboardTurmaPage() {
       });
    };
 
-   const handleSalvarEdicao = () => {
+   const handleSalvarEdicao = async () => {
       if (!editandoAluno) return;
 
       if (!editandoAluno.nome.trim() || !editandoAluno.responsavel.trim()) {
-         alert("Por favor, preencha nome do aluno e responsável");
+         toast.error("Por favor, preencha nome do aluno e responsável");
          return;
       }
 
-      editarMutation.mutate({
-         id: editandoAluno.id,
-         nome: editandoAluno.nome.trim(),
-         responsavel: editandoAluno.responsavel.trim(),
-         dataNascimento: editandoAluno.dataNascimento || undefined
-      });
+      setEditandoAlunoLoading(true);
+      try {
+         await turmasApi.editarAluno({
+            id: editandoAluno.id,
+            nome: editandoAluno.nome.trim(),
+            responsavel: editandoAluno.responsavel.trim(),
+            dataNascimento: editandoAluno.dataNascimento || undefined
+         });
+
+         toast.success("Dados do aluno atualizados com sucesso!");
+         setEditandoAluno(null);
+         await buscarTurma(); // Recarregar dados da turma
+      } catch (error: any) {
+         toast.error(`Erro ao editar aluno: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setEditandoAlunoLoading(false);
+      }
    };
 
-   const handleCriarLista = () => {
+   const handleCriarLista = async () => {
       if (!turmaId || !dadosLista.titulo.trim()) {
-         alert("Por favor, preencha o título da lista");
+         toast.error("Por favor, preencha o título da lista");
          return;
       }
 
       if (questoesSelecionadas.length === 0) {
-         alert("Por favor, selecione pelo menos uma questão");
+         toast.error("Por favor, selecione pelo menos uma questão");
          return;
       }
 
-      criarListaMutation.mutate({
-         titulo: dadosLista.titulo.trim(),
-         descricao: dadosLista.descricao.trim() || undefined,
-         turmaId: turmaId,
-         questoesIds: questoesSelecionadas,
-         dataLiberacao: dadosLista.dataLiberacao || undefined,
-         dataLimite: dadosLista.dataLimite || undefined
-      });
+      setCriandoLista(true);
+      try {
+         await listasApi.create({
+            titulo: dadosLista.titulo.trim(),
+            descricao: dadosLista.descricao.trim() || undefined,
+            turmaId: turmaId,
+            questoesIds: questoesSelecionadas,
+            dataLiberacao: dadosLista.dataLiberacao || undefined,
+            dataLimite: dadosLista.dataLimite || undefined
+         });
+
+         toast.success("Lista de exercícios criada com sucesso!");
+         setMostrarCriarLista(false);
+         setDadosLista({ titulo: "", descricao: "", dataLiberacao: "", dataLimite: "" });
+         setQuestoesSelecionadas([]);
+         await buscarTurma(); // Recarregar dados da turma
+         await buscarListas(); // Recarregar listas
+      } catch (error: any) {
+         toast.error(`Erro ao criar lista: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setCriandoLista(false);
+      }
+   };
+
+   const handleEditarLista = async () => {
+      if (!editandoLista) return;
+
+      setEditandoListaLoading(true);
+      try {
+         await listasApi.update({
+            id: editandoLista.id,
+            titulo: editandoLista.titulo,
+            descricao: editandoLista.descricao || undefined,
+            dataLiberacao: editandoLista.dataLiberacao,
+            dataLimite: editandoLista.dataLimite,
+            questoesIds: editandoLista.questoes?.map((q) => q.id) || []
+         });
+
+         toast.success("Lista de exercícios atualizada com sucesso!");
+         setEditandoLista(null);
+         await buscarListas(); // Recarregar listas
+      } catch (error: any) {
+         toast.error(`Erro ao editar lista: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setEditandoListaLoading(false);
+      }
+   };
+
+   const handleDeletarLista = async (listaId: string) => {
+      setDeletandoLista(true);
+      try {
+         await listasApi.delete(listaId);
+         toast.success("Lista de exercícios removida com sucesso!");
+         await buscarListas(); // Recarregar listas
+      } catch (error: any) {
+         toast.error(`Erro ao deletar lista: ${error.response?.data?.message || error.message}`);
+      } finally {
+         setDeletandoLista(false);
+      }
    };
 
    const handleToggleQuestao = (questaoId: string) => {
@@ -242,7 +322,7 @@ export function DashboardTurmaPage() {
       );
    }
 
-   if (isLoading) {
+   if (carregandoTurma) {
       return (
          <div className="min-h-screen">
             <div className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
@@ -338,10 +418,10 @@ export function DashboardTurmaPage() {
 
                <div className="space-y-6">
                   <ListasExercicios
-                     listas={listasExercicios || []}
+                     listas={(listasExercicios as any) || []}
                      onCriarLista={() => setMostrarCriarLista(true)}
                      onEditarLista={setEditandoLista}
-                     onDeletarLista={(listaId) => deletarListaMutation.mutate(listaId)}
+                     onDeletarLista={handleDeletarLista}
                   />
 
                   <AtividadeRecente />
@@ -360,7 +440,7 @@ export function DashboardTurmaPage() {
             dataNascimento={dataNascimento}
             setDataNascimento={setDataNascimento}
             onCadastrar={handleCadastrarAluno}
-            isLoading={cadastrarMutation.isPending}
+            isLoading={cadastrandoAluno}
          />
 
          <EditarAlunoModal
@@ -368,7 +448,7 @@ export function DashboardTurmaPage() {
             onClose={() => setEditandoAluno(null)}
             setEditandoAluno={setEditandoAluno}
             onSalvar={handleSalvarEdicao}
-            isLoading={editarMutation.isPending}
+            isLoading={editandoAlunoLoading}
          />
 
          <CriarListaModal
@@ -380,30 +460,19 @@ export function DashboardTurmaPage() {
             setDadosLista={setDadosLista}
             questoesSelecionadas={questoesSelecionadas}
             onToggleQuestao={handleToggleQuestao}
-            questoesDisponiveis={questoesDisponiveis}
+            questoesDisponiveis={{ questoes: questoesDisponiveis, total: questoesDisponiveis.length }}
             onCriar={handleCriarLista}
-            isLoading={criarListaMutation.isPending}
+            isLoading={criandoLista}
          />
 
          <EditarListaModal
             editandoLista={editandoLista}
             onClose={() => setEditandoLista(null)}
             setEditandoLista={setEditandoLista}
-            questoesDisponiveis={questoesDisponiveis}
+            questoesDisponiveis={{ questoes: questoesDisponiveis, total: questoesDisponiveis.length }}
             turmaSerie={turma.serie}
-            onSalvar={() => {
-               if (editandoLista) {
-                  editarListaMutation.mutate({
-                     id: editandoLista.id,
-                     titulo: editandoLista.titulo,
-                     descricao: editandoLista.descricao || undefined,
-                     dataLiberacao: editandoLista.dataLiberacao,
-                     dataLimite: editandoLista.dataLimite,
-                     questoesIds: editandoLista.questoes?.map((q) => q.id) || []
-                  });
-               }
-            }}
-            isLoading={editarListaMutation.isPending}
+            onSalvar={handleEditarLista}
+            isLoading={editandoListaLoading}
          />
       </div>
    );

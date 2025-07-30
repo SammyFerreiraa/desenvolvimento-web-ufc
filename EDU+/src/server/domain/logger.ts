@@ -1,6 +1,5 @@
 import { env } from "@/config/env";
 import { asyncLocalStorage } from "../config/trpc";
-import { cloudwatch } from "../external/cloud-watch/core";
 
 export const logger = {
    info: async (title: string, data?: unknown) => {
@@ -18,10 +17,6 @@ export const logger = {
       }
    },
    custom: async ({ level, title, data }: { level: string; title: string; data?: unknown }) => {
-      const userId = asyncLocalStorage.getStore()?.userId;
-      if (env.NODE_ENV === "production") {
-         await cloudwatch.sendLog({ title, data, level, uid: userId });
-      }
       console.log(`[${new Date().toISOString()}] ${level.toUpperCase()}: ${title}`, { data });
    }
 };
