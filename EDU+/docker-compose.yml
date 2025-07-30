@@ -1,0 +1,14 @@
+services:
+   db:
+      container_name: template-fullstack-db
+      image: postgres:17
+      volumes:
+         - dbdata:/var/lib/postgresql/data/
+      environment:
+         POSTGRES_USER: root
+         POSTGRES_PASSWORD: root
+         POSTGRES_DB: db
+      ports:
+         - "5433:5432"
+volumes:
+   dbdata:

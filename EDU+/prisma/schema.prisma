@@ -1,0 +1,421 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+    ADMIN
+    PROFESSOR
+    ALUNO
+}
+
+model User {
+    id            String    @id @default(uuid())
+    name          String?
+    email         String    @unique
+    emailVerified DateTime?
+    image         String?
+    role          UserRole
+    accounts      Account[]
+    sessions      Session[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relacionamentos antigos
+    Post             Post[]
+    Comment          Comment[]
+    verificationCode verificationCode[]
+
+    // Novos relacionamentos para EDU+
+    profile UserProfile?
+
+    // Relacionamentos para professores
+    turmasEnsinadas Turma[]          @relation("ProfessorTurmas")
+    listasFeitas    ListaExercicio[] @relation("ProfessorListas")
+    questoesCriadas Questao[]        @relation("ProfessorQuestoes")
+
+    // Relacionamentos para alunos
+    turmasParticipa Turma[]                @relation("AlunoTurmas")
+    tentativasLista TentativaLista[]       @relation("AlunoTentativas")
+    respostas       TentativaQuestao[]     @relation("AlunoRespostas")
+    conquistas      ConquistaAluno[]       @relation("AlunoConquistas")
+    desempenho      DesempenhoHabilidade[] @relation("AlunoDesempenho")
+}
+
+model Account {
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([provider, providerAccountId])
+}
+
+model Session {
+    sessionToken String   @unique
+    userId       String
+    userAgent    String?
+    expires      DateTime
+    ipAddress    String? // IP address do login
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([ipAddress])
+}
+
+model verificationCode {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    expiresAt DateTime
+    used      Boolean  @default(false)
+    code      String
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+}
+
+// Modelos do sistema Post (exemplo)
+model Post {
+    id        Int      @id @default(autoincrement())
+    name      String
+    content   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    createdBy   User      @relation(fields: [createdById], references: [id])
+    createdById String
+    comments    Comment[]
+
+    @@index([name])
+}
+
+model Comment {
+    id        Int      @id @default(autoincrement())
+    text      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    post   Post    @relation(fields: [postId], references: [id])
+    postId Int
+    user   User?   @relation(fields: [userId], references: [id])
+    userId String?
+}
+
+// Enums e modelos específicos para o sistema EDU+
+enum SerieLevel {
+    PRIMEIRO_ANO
+    SEGUNDO_ANO
+    TERCEIRO_ANO
+    QUARTO_ANO
+    QUINTO_ANO
+}
+
+enum QuestionType {
+    MULTIPLA_ESCOLHA
+    VERDADEIRO_FALSO
+    NUMERO
+    TEXTO_CURTO
+}
+
+enum ExerciseStatus {
+    RASCUNHO
+    PUBLICADO
+    ARQUIVADO
+}
+
+enum StudentProgressStatus {
+    NAO_INICIADO
+    EM_PROGRESSO
+    CONCLUIDO
+}
+
+enum HabilidadeBNCC {
+    // 1º ano
+    EF01MA01 // Utilizar números naturais como indicador de quantidade
+    EF01MA02 // Contar de maneira exata ou aproximada
+    EF01MA03 // Estimar e comparar quantidades
+    EF01MA04 // Contar a quantidade de objetos de coleções
+    EF01MA05 // Comparar números naturais de até duas ordens
+    EF01MA06 // Construir fatos básicos da adição
+    EF01MA07 // Compor e decompor número de até duas ordens
+    EF01MA08 // Resolver e elaborar problemas de adição e subtração
+
+    // 2º ano
+    EF02MA01 // Comparar e ordenar números naturais
+    EF02MA02 // Fazer estimativas por meio de estratégias diversas
+    EF02MA03 // Comparar quantidades de objetos de dois conjuntos
+    EF02MA04 // Compor e decompor números naturais de até três ordens
+    EF02MA05 // Construir fatos básicos da adição e subtração
+    EF02MA06 // Resolver e elaborar problemas de adição e subtração
+
+    // 3º ano
+    EF03MA01 // Ler, escrever e comparar números naturais de até a ordem de unidade de milhar
+    EF03MA02 // Identificar características do sistema de numeração decimal
+    EF03MA03 // Construir e utilizar fatos básicos da adição e da multiplicação
+    EF03MA04 // Estabelecer a relação entre números naturais e pontos da reta numérica
+    EF03MA05 // Utilizar diferentes procedimentos de cálculo mental e escrito
+    EF03MA06 // Resolver e elaborar problemas de adição e subtração
+    EF03MA07 // Resolver e elaborar problemas de multiplicação
+    EF03MA08 // Resolver e elaborar problemas de divisão
+
+    // 4º ano
+    EF04MA01 // Ler, escrever e ordenar números naturais até a ordem de dezenas de milhar
+    EF04MA02 // Mostrar, por decomposição e composição, que todo número natural pode ser escrito por meio de adições e multiplicações por potências de dez
+    EF04MA03 // Resolver e elaborar problemas com números naturais envolvendo adição e subtração
+    EF04MA04 // Utilizar as relações entre adição e subtração, bem como entre multiplicação e divisão
+    EF04MA05 // Utilizar as propriedades das operações para desenvolver estratégias de cálculo
+    EF04MA06 // Resolver e elaborar problemas envolvendo diferentes significados da multiplicação
+    EF04MA07 // Resolver e elaborar problemas de divisão cujo divisor tenha no máximo dois algarismos
+
+    // 5º ano
+    EF05MA01 // Ler, escrever e ordenar números naturais até a ordem das centenas de milhar
+    EF05MA02 // Ler, escrever e ordenar números racionais na forma decimal
+    EF05MA03 // Identificar e representar frações
+    EF05MA04 // Identificar frações equivalentes
+    EF05MA05 // Comparar e ordenar números racionais positivos
+    EF05MA06 // Associar as representações 10%, 25%, 50%, 75% e 100%
+    EF05MA07 // Resolver e elaborar problemas de adição e subtração com números naturais
+    EF05MA08 // Resolver e elaborar problemas de multiplicação e divisão
+}
+
+model Turma {
+    id        String     @id @default(uuid())
+    nome      String
+    serie     SerieLevel
+    anoLetivo Int
+    ativa     Boolean    @default(true)
+
+    // Relacionamento com professor
+    professorId String
+    professor   User   @relation("ProfessorTurmas", fields: [professorId], references: [id])
+
+    // Relacionamento com alunos
+    alunos User[] @relation("AlunoTurmas")
+
+    // Relacionamento com listas de exercícios
+    listas ListaExercicio[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([professorId])
+    @@index([serie])
+}
+
+model ListaExercicio {
+    id            String         @id @default(uuid())
+    titulo        String
+    descricao     String?
+    status        ExerciseStatus @default(RASCUNHO)
+    dataLiberacao DateTime?
+    dataLimite    DateTime?
+
+    // Relacionamentos
+    turmaId String
+    turma   Turma  @relation(fields: [turmaId], references: [id])
+
+    professorId String
+    professor   User   @relation("ProfessorListas", fields: [professorId], references: [id])
+
+    questoes   QuestaoLista[]
+    tentativas TentativaLista[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([turmaId])
+    @@index([professorId])
+    @@index([status])
+}
+
+model Questao {
+    id          String       @id @default(uuid())
+    enunciado   String
+    tipo        QuestionType
+    gabarito    String // JSON com a resposta correta
+    explicacao  String? // Explicação da resolução
+    opcoes      String? // JSON com opções para múltipla escolha
+    dificuldade Int          @default(1) // 1-5
+
+    // Habilidades da BNCC relacionadas
+    habilidades HabilidadeBNCC[]
+    serie       SerieLevel
+
+    // Relacionamentos
+    professorId String
+    professor   User   @relation("ProfessorQuestoes", fields: [professorId], references: [id])
+
+    listas     QuestaoLista[]
+    tentativas TentativaQuestao[]
+
+    ativa     Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([professorId])
+    @@index([serie])
+    @@index([tipo])
+}
+
+model QuestaoLista {
+    id    String @id @default(uuid())
+    ordem Int
+
+    questaoId String
+    questao   Questao @relation(fields: [questaoId], references: [id])
+
+    listaId String
+    lista   ListaExercicio @relation(fields: [listaId], references: [id])
+
+    @@unique([questaoId, listaId])
+    @@index([listaId, ordem])
+}
+
+model TentativaLista {
+    id             String                @id @default(uuid())
+    status         StudentProgressStatus @default(NAO_INICIADO)
+    pontuacaoTotal Float                 @default(0)
+    iniciadaEm     DateTime?
+    finalizadaEm   DateTime?
+
+    // Relacionamentos
+    alunoId String
+    aluno   User   @relation("AlunoTentativas", fields: [alunoId], references: [id])
+
+    listaId String
+    lista   ListaExercicio @relation(fields: [listaId], references: [id])
+
+    tentativasQuestao TentativaQuestao[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([alunoId, listaId])
+    @@index([alunoId])
+    @@index([listaId])
+    @@index([status])
+}
+
+model TentativaQuestao {
+    id              String  @id @default(uuid())
+    resposta        String // JSON com a resposta do aluno
+    correta         Boolean @default(false)
+    pontuacao       Float   @default(0)
+    tempoResposta   Int? // em segundos
+    numeroTentativa Int     @default(1)
+
+    // Relacionamentos
+    alunoId String
+    aluno   User   @relation("AlunoRespostas", fields: [alunoId], references: [id])
+
+    questaoId String
+    questao   Questao @relation(fields: [questaoId], references: [id])
+
+    tentativaListaId String?
+    tentativaLista   TentativaLista? @relation(fields: [tentativaListaId], references: [id])
+
+    respondidaEm DateTime @default(now())
+
+    @@index([alunoId])
+    @@index([questaoId])
+    @@index([tentativaListaId])
+    @@index([correta])
+}
+
+model Conquista {
+    id        String @id @default(uuid())
+    nome      String
+    descricao String
+    icone     String
+    tipo      String // medalha, certificado, etc
+    criterio  String // JSON com critérios para conquistar
+
+    // Relacionamento com alunos que conquistaram
+    alunos ConquistaAluno[]
+
+    ativa     Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([tipo])
+}
+
+model ConquistaAluno {
+    id            String   @id @default(uuid())
+    conquistadaEm DateTime @default(now())
+
+    alunoId String
+    aluno   User   @relation("AlunoConquistas", fields: [alunoId], references: [id])
+
+    conquistaId String
+    conquista   Conquista @relation(fields: [conquistaId], references: [id])
+
+    @@unique([alunoId, conquistaId])
+    @@index([alunoId])
+    @@index([conquistadaEm])
+}
+
+model DesempenhoHabilidade {
+    id                String         @id @default(uuid())
+    habilidade        HabilidadeBNCC
+    totalTentativas   Int            @default(0)
+    acertos           Int            @default(0)
+    percentualAcerto  Float          @default(0)
+    ultimaAtualizacao DateTime       @default(now())
+
+    // Relacionamento com aluno
+    alunoId String
+    aluno   User   @relation("AlunoDesempenho", fields: [alunoId], references: [id])
+
+    @@unique([alunoId, habilidade])
+    @@index([alunoId])
+    @@index([habilidade])
+    @@index([percentualAcerto])
+}
+
+model UserProfile {
+    id     String @id @default(uuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id])
+
+    // Campos específicos para professores
+    especialidade String?
+    biografia     String?
+
+    // Campos específicos para alunos
+    dataNascimento DateTime?
+    responsavel    String?
+    codigoAcesso   String?   @unique // Código único para acesso do aluno
+    ativo          Boolean   @default(true) // Status do aluno
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([codigoAcesso])
+}
